@@ -1,0 +1,6 @@
+{
+    "extends": "oniyi",
+    "rules": {
+      "linebreak-style": 0
+    }
+}
