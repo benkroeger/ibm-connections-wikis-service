@@ -1,5 +1,6 @@
 'use strict';
-module.exports = function (grunt) {
+/* eslint-disable global-require, import/no-extraneous-dependencies */
+module.exports = (grunt) => {
   // Show elapsed time at the end
   require('time-grunt')(grunt);
   // Load all grunt tasks
@@ -9,39 +10,39 @@ module.exports = function (grunt) {
     jshint: {
       options: {
         jshintrc: '.jshintrc',
-        reporter: require('jshint-stylish')
+        reporter: require('jshint-stylish'),
       },
       gruntfile: {
-        src: ['Gruntfile.js']
+        src: ['Gruntfile.js'],
       },
       js: {
-        src: ['*.js']
+        src: ['*.js'],
       },
       test: {
-        src: ['test/**/*.js']
-      }
+        src: ['test/**/*.js'],
+      },
     },
     mochacli: {
       options: {
         reporter: 'nyan',
-        bail: true
+        bail: true,
       },
-      all: ['test/*.js']
+      all: ['test/*.js'],
     },
     watch: {
       gruntfile: {
         files: '<%= jshint.gruntfile.src %>',
-        tasks: ['jshint:gruntfile']
+        tasks: ['jshint:gruntfile'],
       },
       js: {
         files: '<%= jshint.js.src %>',
-        tasks: ['jshint:js', 'mochacli']
+        tasks: ['jshint:js', 'mochacli'],
       },
       test: {
         files: '<%= jshint.test.src %>',
-        tasks: ['jshint:test', 'mochacli']
-      }
-    }
+        tasks: ['jshint:test', 'mochacli'],
+      },
+    },
   });
 
   grunt.registerTask('default', ['jshint', 'mochacli']);
