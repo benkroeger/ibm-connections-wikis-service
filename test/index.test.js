@@ -22,7 +22,7 @@ test.beforeEach((t) => {
     },
     plugins: {
       cache: {
-        ttl: 60 * 60,
+        ttl: 60 * 70,
       }
     }
   };
@@ -69,17 +69,28 @@ test.cb('validate retrieving wiki navigation feed, wikiLabel provided', (t) => {
   };
   const options = {
     authType: 'basic',
+    user: {
+      id: 1,
+    },
     plugins: {
       cacheRedis: {
-        delayCaching: false,
+        delayCaching: true,
+        validatorsToSkip: {
+          requestValidators: ['maxAgeZero'],
+          responseValidators: ['maxAgeZero'],
+        },
+        hostConfig: {
+          storeNoStore: true,
+          storePrivate: true,
+        }
       },
     },
   };
 
-  service.navigationFeed(query, options, (err, response, body) => {
+  service.navigationFeed(query, options, (err, items) => {
     console.log(err);
+    console.log(items);
     t.true(true);
-    t.end();
   })
 });
 
