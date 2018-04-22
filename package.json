@@ -29,10 +29,12 @@
     "test": "ava --verbose"
   },
   "dependencies": {
+    "debug": "3.1.0",
     "lodash": "4.17.4",
-    "oniyi-http-client": "1.2.0",
-    "oniyi-http-plugin-credentials": "^1.0.0",
-    "oniyi-http-plugin-format-url-template": "1.0.2",
+    "oniyi-http-client": "git+https://github.com/futin/oniyi-http-client#feature/handle-error-response-from-cache",
+    "oniyi-http-plugin-cache-redis": "bitbucket:gisag/oniyi-http-plugin-cache-redis",
+    "oniyi-http-plugin-credentials": "git+https://github.com/futin/oniyi-http-plugin-credentials#feature/add-phase-hook-handler",
+    "oniyi-http-plugin-format-url-template": "git+https://github.com/futin/oniyi-http-plugin-format-url-template#feature/add-phase-list-logic",
     "oniyi-utils-xml": "1.1.0"
   },
   "devDependencies": {

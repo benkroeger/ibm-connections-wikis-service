@@ -8,76 +8,84 @@ import _ from 'lodash';
 
 // internal modules
 import { mock, record, persist } from './fixtures/http-mocking';
-import serviceFactory from '../lib';
+import initContext from './fixtures/utils';
 
 const { unmocked } = process.env;
 
 test.before(() => (unmocked ? record() : mock()));
 test.after(() => unmocked && persist());
 
-test.beforeEach((t) => {
-  const serviceOptions = { defaults: { authType: 'basic' } };
-
-  if (unmocked) {
-    Object.assign(serviceOptions.defaults, {
-      auth: {
-        user: process.env.username,
-        pass: process.env.password,
-      },
-    });
-  }
-
-
-  const service = serviceFactory('https://apps.na.collabserv.com/wikis/', serviceOptions);
-  // const service = serviceFactory('https://lc.gish.de/wikis/', serviceOptions);
-
-  const baseMembers = ['id', 'versionLabel', 'title', 'published', 'updated', 'created',
-    'content', 'links', 'author', 'modified',
-  ];
-
-  const wikiPageMembers = [...baseMembers, 'label', 'summary', 'visibility', 'versionUuid',
-    'propagation', 'totalMediaSize', 'ranks',
-  ];
-  const wikiVersionPageMembers = [...baseMembers, 'label', 'summary', 'documentUuid', 'libraryId'];
-  const wikiCommentsMembers = [...baseMembers, 'language', 'deleteWithRecord'];
-  const wikiVersionsMembers = [...baseMembers, 'label', 'summary', 'libraryId', 'documentUuid'];
-
-  _.assign(t.context, {
-    service,
-    serviceOptions,
-    wikiPageMembers,
-    wikiVersionPageMembers,
-    wikiCommentsMembers,
-    wikiVersionsMembers,
-  });
-});
+test.beforeEach(t => initContext(t));
 
 /* Successful scenarios validations */
 
-test.cb('validate retrieving wiki navigation feed, wikiLabel provided', (t) => {
+test.cb('validate retrieving wiki navigation feed, wikiLabel provided - regular load', (t) => {
   const { service } = t.context;
   const query = {
     wikiLabel: '434a24f4-28a2-45a4-b83a-a55120f1ca72',
   };
-  const options = {
-    authType: 'basic',
-  };
-  service.navigationFeed(query, options, (err, response) => {
+
+  service.navigationFeed(query, { /* options */ }, (err, { items } = {}) => {
     t.ifError(err);
-    t.true('navigationFeed' in response, `{navigationFeed} should be a member of ${response}`);
 
-    const { navigationFeed } = response;
-    t.true(
-      _.isPlainObject(navigationFeed),
-      `{navigationFeed} should be plain object, instead we got: [${typeof navigationFeed}]`
-    );
-    t.true('items' in navigationFeed, `{items} should be a member of ${navigationFeed}`);
+    t.is(items.length, 23);
+    t.true(Array.isArray(items));
+    items.forEach((item) => {
+      const { id, label, children, childSize, type } = item;
+      t.true(_.isString(id));
+      t.true(_.isString(label));
+      t.is(childSize, children.length);
+      t.is(type, 'item');
+    });
 
-    const { items } = navigationFeed;
-    t.true(_.isArray(items), `{items} should be an array, instead we got: [${typeof items}]`);
-    t.is(items.length, 13, `there should be exactly 9 items in ${items}`);
     t.end();
-  });
+  })
+});
+
+test.cb('validate retrieving wiki navigation feed, wikiLabel provided - over 300 wiki pages', (t) => {
+  const { service } = t.context;
+  const query = {
+    wikiLabel: 'b4e28920-2670-4f35-9db7-356b909e551a',
+  };
+
+  service.navigationFeed(query, {/* options */}, (err, { items } = {} ) => {
+    t.ifError(err);
+    t.is(items.length, 611);
+    t.true(Array.isArray(items));
+    items.forEach((item) => {
+      const { id, label, type } = item;
+      t.true(_.isString(id));
+      t.true(_.isString(label));
+      t.is(type, 'item');
+    });
+
+    t.end();
+  })
+});
+
+test.cb('validate retrieving wiki navigation feed, wikiLabel provided, stub type allowed', (t) => {
+  const { service } = t.context;
+  const query = {
+    wikiLabel: 'b4e28920-2670-4f35-9db7-356b909e551a',
+  };
+
+  service.navigationFeed(query, { isStubTypeAllowed: true }, (err, { items } = {} ) => {
+    t.ifError(err);
+    t.is(items.length, 5);
+    t.true(Array.isArray(items));
+    items.forEach((item) => {
+      const { id, label, childSize, children, type } = item;
+      t.true(_.isString(id));
+      t.true(_.isString(label));
+      t.true(/item|stub/.test(type));
+      if (type === 'stub') {
+        t.not(childSize, children.length);
+        t.is(children.length, 0);
+      }
+    });
+
+    t.end();
+  })
 });
 
 test.cb('validate retrieving wiki page, wikiLabel & pageLabel provided', (t) => {
@@ -400,7 +408,7 @@ test.cb('error validation for retrieving wiki page "media content", wrong "media
   service.wikiPage(query, options, (err, response) => {
     t.ifError(err);
     const content = response.wikiPage.content.src;
-    service.mediaContent({}, { content, mediaAuthType: 'oauth' }, (err, response) => { // eslint-disable-line no-shadow
+    service.mediaContent({}, { content, mediaAuthType: '' }, (err, response) => { // eslint-disable-line no-shadow
       t.ifError(err);
       const { mediaContent } = response;
       t.true(mediaContent.includes('<!DOCTYPE html'), '{mediaContent} should start with "<!DOCTYPE html"');
